@@ -1,0 +1,24 @@
+
+entry.o:     file format elf32-i386
+
+
+Disassembly of section .text:
+
+00000000 <multiboot_header>:
+   0:	02 b0 ad 1b 00 00    	add    0x1bad(%eax),%dh
+   6:	00 00                	add    %al,(%eax)
+   8:	fe 4f 52             	decb   0x52(%edi)
+   b:	e4                   	.byte 0xe4
+
+0000000c <entry>:
+   c:	0f 20 e0             	mov    %cr4,%eax
+   f:	83 c8 10             	or     $0x10,%eax
+  12:	0f 22 e0             	mov    %eax,%cr4
+  15:	b8 00 00 00 80       	mov    $0x80000000,%eax
+  1a:	0f 22 d8             	mov    %eax,%cr3
+  1d:	0f 20 c0             	mov    %cr0,%eax
+  20:	0d 00 00 01 80       	or     $0x80010000,%eax
+  25:	0f 22 c0             	mov    %eax,%cr0
+  28:	bc 00 10 00 00       	mov    $0x1000,%esp
+  2d:	b8 00 00 00 00       	mov    $0x0,%eax
+  32:	ff e0                	jmp    *%eax
