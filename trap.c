@@ -13,6 +13,7 @@ struct gatedesc idt[256];
 extern uint vectors[];  // in vectors.S: array of 256 entry pointers
 struct spinlock tickslock;
 uint ticks;
+int page_fault_handler(struct trapframe *tf, pde_t* pgdir);
 
 void
 tvinit(void)
@@ -77,6 +78,10 @@ trap(struct trapframe *tf)
             cpuid(), tf->cs, tf->eip);
     lapiceoi();
     break;
+  case T_PGFLT:
+    if (page_fault_handler(tf, myproc()->pgdir) != 0) 
+      myproc()->killed = 1;
+    break;
 
   //PAGEBREAK: 13
   default:
@@ -109,4 +114,33 @@ trap(struct trapframe *tf)
   // Check if the process has been killed since we yielded
   if(myproc() && myproc()->killed && (tf->cs&3) == DPL_USER)
     exit();
+}
+
+int page_fault_handler(struct trapframe *tf, pde_t* pgdir) {
+  cprintf("page fault occur, pid %d %s: trap %d err %d on cpu %d "
+          "eip 0x%x addr 0x%x--kill proc\n",
+          myproc()->pid, myproc()->name, tf->trapno, tf->err, cpuid(), tf->eip,
+          rcr2());
+
+  uint page_fault_addr = rcr2();
+  if (page_fault_addr > myproc()->sz) {
+    return -1;
+  }
+  page_fault_addr = PGROUNDDOWN(page_fault_addr);
+
+  // map a page for page_fault_addr
+  char *mem = kalloc();
+  if (mem == 0) {
+    cprintf("allocuvm out of memory\n");
+    return -1;
+  }
+  memset(mem, 0, PGSIZE);
+  if (mappages(pgdir, (char *)page_fault_addr, PGSIZE, V2P(mem),
+               PTE_W | PTE_U) < 0) {
+    cprintf("allocuvm out of memory (2)\n");
+    kfree(mem);
+    return -1;
+  }
+
+  return 0; // successful
 }
