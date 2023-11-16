@@ -55,6 +55,19 @@ trap(struct trapframe *tf)
       release(&tickslock);
     }
     lapiceoi();
+    // update process's ticks
+  if(myproc() != 0 && (tf->cs & 3) == 3) {
+    myproc()->nticks++;
+    if (myproc()->nticks >= myproc()->alarmticks) {
+      // call alarmhandler
+      // maybe we need hack the process's user space stack.
+      tf->esp -= 4;
+      *(uint*)(tf->esp) = tf->eip;
+      tf->eip = (uint)(myproc()->alarmhandler);
+      myproc()->nticks = 0;
+    } 
+  }
+
     break;
   case T_IRQ0 + IRQ_IDE:
     ideintr();
