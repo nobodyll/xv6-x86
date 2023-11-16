@@ -61,6 +61,11 @@ trap(struct trapframe *tf)
     if (myproc()->nticks >= myproc()->alarmticks) {
       // call alarmhandler
       // maybe we need hack the process's user space stack.
+
+      // %eax, %ecx, %edx are "caller save" registers
+      // %ebp, %ebx, %esi, %edi are "callee save" registers
+      // we need save caller save registers to the stack
+
       tf->esp -= 4;
       *(uint*)(tf->esp) = tf->eip;
       tf->eip = (uint)(myproc()->alarmhandler);
