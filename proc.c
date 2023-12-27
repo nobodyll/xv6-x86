@@ -376,6 +376,9 @@ sched(void)
     panic("sched running");
   if(readeflags()&FL_IF)
     panic("sched interruptible");
+
+  // Why we need save the mycpu()->intena on the save, and resume it
+  // A: not sure answer:{because the interrupt enable or not enable is the property of the process not the cpu, it also mean the intena is a part of process's state}
   intena = mycpu()->intena;
   swtch(&p->context, mycpu()->scheduler);
   mycpu()->intena = intena;
